@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle Financeiro</title>
+    <link rel="stylesheet" href="financeiro.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Controle financeiro</p>
+        <h1>Meus gastos</h1>
+      </div>
+      <div class="topbar-actions">
+        <button class="cloud-btn" id="cloudBtn" type="button" data-status="loading">
+          <span class="cloud-dot"></span><span id="cloudLabel">Conectando…</span>
+        </button>
+        <button class="btn primary" id="newExpenseBtn" type="button">+ Novo gasto</button>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab is-active" data-tab="month" role="tab" type="button">Resumo do mês</button>
+      <button class="tab" data-tab="expenses" role="tab" type="button">Lançamentos</button>
+      <button class="tab" data-tab="cards" role="tab" type="button">Cartões</button>
+      <button class="tab" data-tab="categories" role="tab" type="button">Tipos de gasto</button>
+      <button class="tab" data-tab="backup" role="tab" type="button">Backup</button>
+    </nav>
+
+    <main>
+      <!-- RESUMO DO MÊS -->
+      <section class="view is-active" id="view-month">
+        <div class="month-nav">
+          <button class="btn ghost" id="prevMonth" type="button" aria-label="Mês anterior">‹</button>
+          <h2 id="monthLabel"></h2>
+          <button class="btn ghost" id="nextMonth" type="button" aria-label="Próximo mês">›</button>
+          <button class="btn ghost small" id="todayMonth" type="button">Hoje</button>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><span>Total do mês</span><strong id="kpiTotal">R$ 0,00</strong></div>
+          <div class="kpi"><span>Parcelas no mês</span><strong id="kpiCount">0</strong></div>
+          <div class="kpi"><span>Compras novas (valor total)</span><strong id="kpiNew">R$ 0,00</strong></div>
+          <div class="kpi"><span>Comprometido nos próximos meses</span><strong id="kpiFuture">R$ 0,00</strong></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Por tipo de gasto</h3>
+            <div id="byCategory" class="bars"></div>
+          </div>
+          <div class="panel">
+            <h3>Por cartão (fatura)</h3>
+            <div id="byCard" class="bars"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Parcelas deste mês</h3>
+            <div class="filters">
+              <select id="monthFilterCard" aria-label="Filtrar por cartão"></select>
+              <select id="monthFilterCategory" aria-label="Filtrar por tipo"></select>
+              <button class="btn ghost small" id="exportMonthCsv" type="button">Exportar CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Data da compra</th><th>Descrição</th><th>Tipo</th><th>Cartão</th><th>Parcela</th><th class="num">Valor</th></tr>
+              </thead>
+              <tbody id="monthRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Próximos meses</h3>
+          <div id="forecast" class="forecast"></div>
+        </div>
+      </section>
+
+      <!-- LANÇAMENTOS -->
+      <section class="view" id="view-expenses">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Todas as compras</h3>
+            <div class="filters">
+              <input type="search" id="searchExpenses" placeholder="Buscar descrição…" />
+              <select id="filterCard" aria-label="Filtrar por cartão"></select>
+              <select id="filterCategory" aria-label="Filtrar por tipo"></select>
+              <label class="check"><input type="checkbox" id="onlyOpen" /> Só com parcelas em aberto</label>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Cartão</th><th>Parcelas</th><th class="num">Parcela</th><th class="num">Total</th><th class="num">Restante</th><th></th></tr>
+              </thead>
+              <tbody id="expenseRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARTÕES -->
+      <section class="view" id="view-cards">
+        <div class="grid-2">
+          <form class="panel" id="cardForm">
+            <h3 id="cardFormTitle">Novo cartão</h3>
+            <input type="hidden" name="id" />
+            <label>Nome do cartão<input name="name" required placeholder="Ex.: Nubank, Itaú Visa" /></label>
+            <div class="row">
+              <label>Dia de fechamento<input name="closingDay" type="number" min="1" max="31" value="1" required /></label>
+              <label>Dia de vencimento<input name="dueDay" type="number" min="1" max="31" value="10" required /></label>
+            </div>
+            <div class="row">
+              <label>Limite (opcional)<input name="limit" inputmode="decimal" placeholder="0,00" /></label>
+              <label>Cor<input name="color" type="color" value="#7c3aed" /></label>
+            </div>
+            <p class="hint">Compras feitas a partir do dia de fechamento entram na fatura do mês seguinte.</p>
+            <div class="actions">
+              <button class="btn ghost" type="reset" id="cardReset">Limpar</button>
+              <button class="btn primary" type="submit">Salvar cartão</button>
+            </div>
+          </form>
+          <div class="panel">
+            <h3>Meus cartões</h3>
+            <ul class="item-list" id="cardList"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- CATEGORIAS -->
+      <section class="view" id="view-categories">
+        <div class="grid-2">
+          <form class="panel" id="categoryForm">
+            <h3 id="categoryFormTitle">Novo tipo de gasto</h3>
+            <input type="hidden" name="id" />
+            <label>Nome<input name="name" required placeholder="Ex.: Mercado, Transporte" /></label>
+            <div class="row">
+              <label>Orçamento mensal (opcional)<input name="budget" inputmode="decimal" placeholder="0,00" /></label>
+              <label>Cor<input name="color" type="color" value="#0ea5e9" /></label>
+            </div>
+            <div class="actions">
+              <button class="btn ghost" type="reset" id="categoryReset">Limpar</button>
+              <button class="btn primary" type="submit">Salvar tipo</button>
+            </div>
+          </form>
+          <div class="panel">
+            <h3>Tipos de gasto</h3>
+            <ul class="item-list" id="categoryList"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- BACKUP -->
+      <section class="view" id="view-backup">
+        <div class="panel narrow">
+          <h3>Backup dos dados</h3>
+          <p class="hint">Os dados ficam salvos apenas neste navegador. Exporte um backup de vez em quando, ou para levar para outro dispositivo.</p>
+          <div class="actions start">
+            <button class="btn primary" id="exportJson" type="button">Exportar backup (.json)</button>
+            <label class="btn ghost file-btn">Importar backup<input type="file" id="importJson" accept="application/json,.json" hidden /></label>
+            <button class="btn danger" id="clearAll" type="button">Apagar tudo</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- DIALOG DE GASTO -->
+    <dialog id="expenseDialog">
+      <form id="expenseForm" method="dialog">
+        <h3 id="expenseFormTitle">Novo gasto</h3>
+        <input type="hidden" name="id" />
+        <label>Descrição<input name="description" required placeholder="Ex.: Geladeira, Supermercado" /></label>
+        <div class="row">
+          <label>Tipo de gasto<select name="categoryId" required></select></label>
+          <label>Forma de pagamento<select name="cardId"></select></label>
+        </div>
+        <div class="row">
+          <label>Data da compra<input name="date" type="date" required /></label>
+          <label>Parcelas<input name="installments" type="number" min="1" max="120" value="1" required /></label>
+        </div>
+        <div class="row">
+          <label>Valor<input name="amount" inputmode="decimal" required placeholder="0,00" /></label>
+          <label>O valor informado é
+            <select name="amountMode">
+              <option value="total">Total da compra</option>
+              <option value="installment">Valor de cada parcela</option>
+            </select>
+          </label>
+        </div>
+        <p class="preview" id="expensePreview"></p>
+        <label>Observações<textarea name="notes" rows="2"></textarea></label>
+        <div class="actions">
+          <button class="btn ghost" type="button" id="cancelExpense">Cancelar</button>
+          <button class="btn primary" type="submit">Salvar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- DIALOG DE CONTA -->
+    <dialog id="accountDialog">
+      <h3>Sincronização na nuvem</h3>
+      <form id="loginForm">
+        <p class="hint">Entre com sua conta para ver os mesmos dados em qualquer computador ou celular. Na primeira vez, clique em “Criar conta”.</p>
+        <label>E-mail<input name="email" type="email" autocomplete="username" required /></label>
+        <label>Senha<input name="password" type="password" autocomplete="current-password" minlength="6" required /></label>
+        <p class="hint" id="loginMsg" role="status"></p>
+        <div class="actions">
+          <button class="btn ghost" type="button" id="signupBtn">Criar conta</button>
+          <button class="btn primary" type="submit">Entrar</button>
+        </div>
+      </form>
+      <div id="accountInfo" hidden>
+        <p>Conectado como <strong id="accountEmail"></strong></p>
+        <p class="hint" id="accountPending"></p>
+        <div class="actions start">
+          <button class="btn ghost" type="button" id="syncNow">Sincronizar agora</button>
+          <button class="btn danger" type="button" id="logoutBtn">Sair deste computador</button>
+        </div>
+      </div>
+      <p class="hint" id="cloudOffInfo" hidden>A nuvem ainda não foi configurada. Preencha o arquivo <code>financeiro/config.js</code> com os dados do seu projeto Supabase (veja o README). Enquanto isso, os dados ficam salvos só neste navegador.</p>
+      <div class="actions"><button class="btn ghost" type="button" id="closeAccount">Fechar</button></div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="config.js"></script>
+    <script src="vendor/supabase.js"></script>
+    <script src="financeiro.js"></script>
+  </body>
+</html>
