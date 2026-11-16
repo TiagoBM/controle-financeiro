@@ -213,17 +213,34 @@
           <button class="btn ghost" type="button" id="signupBtn">Criar conta</button>
           <button class="btn primary" type="submit">Entrar</button>
         </div>
+        <p class="forgot"><button class="link-btn" type="button" id="forgotBtn">Esqueci minha senha</button></p>
       </form>
       <div id="accountInfo" hidden>
         <p>Conectado como <strong id="accountEmail"></strong></p>
         <p class="hint" id="accountPending"></p>
         <div class="actions start">
           <button class="btn ghost" type="button" id="syncNow">Sincronizar agora</button>
+          <button class="btn ghost" type="button" id="changePwBtn">Trocar senha</button>
           <button class="btn danger" type="button" id="logoutBtn">Sair deste computador</button>
         </div>
       </div>
       <p class="hint" id="cloudOffInfo" hidden>A nuvem ainda não foi configurada. Preencha o arquivo <code>financeiro/config.js</code> com os dados do seu projeto Supabase (veja o README). Enquanto isso, os dados ficam salvos só neste navegador.</p>
       <div class="actions"><button class="btn ghost" type="button" id="closeAccount">Fechar</button></div>
+    </dialog>
+
+    <!-- DIALOG DE NOVA SENHA -->
+    <dialog id="passwordDialog">
+      <form id="passwordForm">
+        <h3>Definir nova senha</h3>
+        <p class="hint" id="passwordIntro">Escolha uma nova senha para a sua conta.</p>
+        <label>Nova senha<input name="password" type="password" autocomplete="new-password" minlength="6" required /></label>
+        <label>Repita a nova senha<input name="confirm" type="password" autocomplete="new-password" minlength="6" required /></label>
+        <p class="hint" id="passwordMsg" role="status"></p>
+        <div class="actions">
+          <button class="btn ghost" type="button" id="cancelPassword">Cancelar</button>
+          <button class="btn primary" type="submit">Salvar nova senha</button>
+        </div>
+      </form>
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

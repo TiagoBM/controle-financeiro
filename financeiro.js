@@ -1014,6 +1014,8 @@
     client.auth.onAuthStateChange((event, session) => {
       // Não chamar o Supabase direto dentro deste callback (recomendação da documentação).
       setTimeout(() => {
+        // Chegou pelo link "redefinir senha" do e-mail: pede a nova senha.
+        if (event === "PASSWORD_RECOVERY") openPasswordDialog(true);
         if (session?.user) onSignedIn(session.user);
         else if (event === "SIGNED_OUT" || event === "INITIAL_SESSION") onSignedOut();
       }, 0);
@@ -1083,6 +1085,67 @@
   });
   $("#signupBtn").addEventListener("click", () => doAuth("signup"));
   $("#syncNow").addEventListener("click", () => scheduleSync(0));
+
+  // ---------- Recuperar / trocar senha ----------
+  const passwordDialog = $("#passwordDialog");
+  const passwordForm = $("#passwordForm");
+
+  function openPasswordDialog(fromEmail) {
+    passwordForm.reset();
+    $("#passwordMsg").textContent = "";
+    $("#passwordIntro").textContent = fromEmail
+      ? "Você abriu o link de recuperação. Escolha uma nova senha para a sua conta."
+      : "Escolha uma nova senha para a sua conta.";
+    if (accountDialog.open) accountDialog.close();
+    passwordDialog.showModal();
+  }
+
+  $("#forgotBtn").addEventListener("click", async () => {
+    const msg = $("#loginMsg");
+    const email = loginForm.email.value.trim();
+    if (!client) return toast("Não foi possível conectar ao Supabase.");
+    if (!email) {
+      msg.textContent = "Digite seu e-mail no campo acima e clique de novo em “Esqueci minha senha”.";
+      loginForm.email.focus();
+      return;
+    }
+    if (location.protocol === "file:") {
+      msg.textContent = "A recuperação por e-mail só funciona no site publicado (endereço https://…), não no arquivo aberto do computador.";
+      return;
+    }
+    msg.textContent = "Enviando…";
+    const { error } = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: location.origin + location.pathname,
+    });
+    msg.textContent = error
+      ? /rate|security purposes/i.test(error.message)
+        ? "Muitas tentativas seguidas. Espere alguns minutos e tente de novo."
+        : "Erro: " + error.message
+      : `Se existir uma conta para ${email}, enviamos um link para redefinir a senha. Veja sua caixa de entrada (e o spam) e abra o link neste mesmo aparelho.`;
+  });
+
+  $("#changePwBtn").addEventListener("click", () => openPasswordDialog(false));
+  $("#cancelPassword").addEventListener("click", () => passwordDialog.close());
+
+  passwordForm.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const msg = $("#passwordMsg");
+    const password = passwordForm.password.value;
+    if (password.length < 6) return (msg.textContent = "A senha precisa ter pelo menos 6 caracteres.");
+    if (password !== passwordForm.confirm.value) return (msg.textContent = "As duas senhas não são iguais.");
+    msg.textContent = "Salvando…";
+    const { error } = await client.auth.updateUser({ password });
+    if (error) {
+      msg.textContent = /different from the old/i.test(error.message)
+        ? "A nova senha precisa ser diferente da anterior."
+        : /session/i.test(error.message)
+          ? "O link expirou. Peça um novo em “Esqueci minha senha”."
+          : "Erro: " + error.message;
+      return;
+    }
+    passwordDialog.close();
+    toast("Senha alterada.");
+  });
   $("#logoutBtn").addEventListener("click", async () => {
     if (
       queue.length &&

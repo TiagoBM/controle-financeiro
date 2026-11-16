@@ -78,6 +78,8 @@ h3 { font-size: 1rem; margin-bottom: 12px; }
 .cloud-btn[data-status="signedout"] .cloud-dot { background: var(--warn); }
 .cloud-btn[data-status="error"] .cloud-dot { background: var(--danger); }
 @keyframes pulse { to { opacity: 0.3; } }
+.forgot { margin: 10px 0 0; text-align: right; }
+.link-btn { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; font-size: 0.85rem; text-decoration: underline; }
 code { font-size: 0.85em; background: var(--bg); padding: 1px 4px; border-radius: 4px; }
 
 .eyebrow {
